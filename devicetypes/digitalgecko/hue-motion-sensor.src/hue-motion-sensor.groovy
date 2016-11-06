@@ -66,7 +66,7 @@ metadata {
         standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
             state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
         }
-//                standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+//        standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 //            state "default", label:"configure", action:"configure"
 //        }
         main "motion"
@@ -78,13 +78,11 @@ metadata {
 
 // Parse incoming device messages to generate events
 def parse(String description) {
-    log.debug "description is $description"
     def msg = zigbee.parse(description)
 
 	Map map = [:]
     if (description?.startsWith('catchall:')) {
 		map = parseCatchAllMessage(description)
-        //log.trace "catchall"
 	}
 	else if (description?.startsWith('temperature: ')) {
 		map = parseCustomMessage(description)
@@ -98,7 +96,6 @@ def parse(String description) {
 
 	if (description?.startsWith('enroll request')) {
 		List cmds = enrollResponse()
-		log.debug "enroll response: ${cmds}"
 		result = cmds?.collect { new physicalgraph.device.HubAction(it) }
 	}
 	else if (description?.startsWith('read attr -')) {
@@ -114,15 +111,9 @@ def refresh() {
     log.debug "Refreshing Values"
 
     def refreshCmds = []
-    log.trace "Refresh : read battery 0x0001"
     refreshCmds +=zigbee.readAttribute(0x0001, 0x0020) // Read battery?
-	log.trace "Refresh : read temp 0x0402"
     refreshCmds += zigbee.readAttribute(0x0402, 0x0000) // Read temp?
-
-	log.trace "Refresh : read luminance 0x0400"
     refreshCmds += zigbee.readAttribute(0x0400, 0x0000) // Read luminance?
-
-	log.trace "Refresh : read motion 0x0406"
     refreshCmds += zigbee.readAttribute(0x0406, 0x0000) // Read motion?
 
     return refreshCmds + enrollResponse()
@@ -157,7 +148,7 @@ def configure() {
  */
 
 private Map getMotionResult(value) {
-    log.trace "Motion : " + value
+    //log.trace "Motion : " + value
 	
     def descriptionText = value == "01" ? '{{ device.displayName }} detected motion':
 			'{{ device.displayName }} stopped detecting motion'
@@ -176,7 +167,7 @@ private Map getMotionResult(value) {
 */
 private Map getTemperatureResult(value) {
 
-	log.trace "Temperature : " + value
+	//log.trace "Temperature : " + value
 	if (tempOffset) {
 		def offset = tempOffset as int
 		def v = value as int
@@ -204,7 +195,7 @@ def getTemperature(value) {
 	}
 
 private Map getLuminanceResult(rawValue) {
-	log.debug "Luminance rawValue = ${rawValue}"
+	//log.debug "Luminance rawValue = ${rawValue}"
 
 	def result = [
 		name: 'illuminance',
@@ -222,7 +213,7 @@ private Map getLuminanceResult(rawValue) {
 */
 //TODO: needs calibration
 private Map getBatteryResult(rawValue) {
-	log.debug "Battery rawValue = ${rawValue}"
+	//log.debug "Battery rawValue = ${rawValue}"
 
 	def result = [
 		name: 'battery',
@@ -351,7 +342,6 @@ private Map parseCatchAllMessage(String description) {
             		log.debug "catchall : luminance" + cluster
                 	resultMap = getLuminanceResult(cluster.data.last());
                 }
-	//                String luminance = cluster.data[-2..-1].reverse().collect { cluster.hex1(it) }.join()
 
 			break
             
