@@ -66,9 +66,11 @@ metadata {
         standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
             state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
         }
-        
+//                standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+//            state "default", label:"configure", action:"configure"
+//        }
         main "motion"
-        details(["motion","temperature","battery", "refresh","illuminance"])
+        details(["motion","temperature","battery", "refresh","illuminance",'configure'])
     }
 }
 
@@ -114,7 +116,6 @@ def refresh() {
     def refreshCmds = []
     log.trace "Refresh : read battery 0x0001"
     refreshCmds +=zigbee.readAttribute(0x0001, 0x0020) // Read battery?
-
 	log.trace "Refresh : read temp 0x0402"
     refreshCmds += zigbee.readAttribute(0x0402, 0x0000) // Read temp?
 
@@ -143,10 +144,9 @@ def configure() {
     configCmds += zigbee.batteryConfig()
 	configCmds += zigbee.temperatureConfig(30, 600) // Set temp reporting times // Confirmed
     
-    	configCmds += zigbee.configureReporting(0x406,0x0000, 0x18, 30, 600, null) // motion // confirmed
-
+    configCmds += zigbee.configureReporting(0x406,0x0000, 0x18, 30, 600, null) // motion // confirmed
     
-	configCmds += zigbee.configureReporting(0x400,0x0000, 0x21, 30, 60, null) // Set luminance reporting times?? maybe
+	configCmds += zigbee.configureReporting(0x400,0x0000, 0x21, 30, 600, null) // Set luminance reporting times?? maybe
 
     
     return refresh() + configCmds 
@@ -170,19 +170,6 @@ private Map getMotionResult(value) {
 	]
 }
 
-private Map getPresenceResult(value) {
-    log.trace "Presence : " + value
-	
-    def descriptionText = value == "01" ? '{{ device.displayName }} detected presence':
-			'{{ device.displayName }} stopped detecting presence'
-    
-    return [
-		name: 'presence',
-		value: value == "01" ? "present" : "not present",
-		descriptionText: descriptionText,
-		translatable: true,
-	]
-}
 
 /*
   getTemperatureResult
@@ -223,7 +210,7 @@ private Map getLuminanceResult(rawValue) {
 		name: 'illuminance',
 		value: '--',
 		translatable: true,
-        unit : 'lux'
+ 		unit: 'lux'
 	]
     
     result.value = rawValue
@@ -315,7 +302,6 @@ private List parseReportAttributeMessage(String description) {
     // Motion
    	else if (descMap.cluster == "0406" && descMap.attrId == "0000") {
     	result << getMotionResult(descMap.value)
-        result << getPresenceResult( descMap.value) 
 	}
     
     // Battery
