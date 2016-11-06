@@ -23,7 +23,6 @@ metadata {
         capability "Temperature Measurement"
         capability "Sensor"
         capability "Illuminance Measurement" //0x0400
-        capability "Presence Sensor"
 
         fingerprint profileId: "0104", inClusters: "0000,0001,0003,0406,0400,0402", outClusters: "0019", manufacturer: "Philips", model: "SML001", deviceJoinName: "Hue Motion Sensor"
     }
@@ -68,12 +67,8 @@ metadata {
             state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
         }
         
-        standardTile("config", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
-            state "default", action:"configure", label:'config'
-        }
-        
         main "motion"
-        details(["motion","temperature","battery", "refresh","illuminance","config"])
+        details(["motion","temperature","battery", "refresh","illuminance"])
     }
 }
 
@@ -108,29 +103,6 @@ def parse(String description) {
 		result = parseReportAttributeMessage(description).each { createEvent(it) }
 	}
 	return result
-
-
-/////////////
-log.error msg
-
-    log.debug "description is $description"
-    def event = zigbee.getEvent(description)
-    log.error event
-
-    if (event) {
-        if (event.name == "power") {
-            def powerValue
-            powerValue = (event.value as Integer)/10            //TODO: The divisor value needs to be set as part of configuration
-            sendEvent(name: "power", value: powerValue)
-        }
-        else {
-            sendEvent(event)
-        }
-    }
-    else {
-        log.warn "DID NOT PARSE MESSAGE for description : $description"
-        log.debug zigbee.parseDescriptionAsMap(description)
-    }
 }
 
 /*
