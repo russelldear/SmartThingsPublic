@@ -60,15 +60,21 @@ metadata {
         valueTile("battery", "device.battery", decoration: "flat", inactiveLabel: false, width: 2, height: 2) {
 			state "battery", label:'${currentValue}% battery', unit:""
 		}
-        valueTile("illuminance", "device.illuminance", inactiveLabel: false, width: 2, height: 2) {
-			state "luminosity", label:'${currentValue} ${unit}', unit:"lux"
+		valueTile("illuminance", "device.illuminance", width: 2, height: 2) {
+			state("illuminance", label:'${currentValue}', unit:"lux",
+				backgroundColors:[
+					[value: 9, color: "#767676"],
+					[value: 315, color: "#ffa81e"],
+					[value: 1000, color: "#fbd41b"]
+				]
+			)
 		}
         standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
             state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
         }
-//        standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
-//            state "default", label:"configure", action:"configure"
-//        }
+        standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+            state "default", label:"configure", action:"configure"
+        }
         main "motion"
         details(["motion","temperature","battery", "refresh","illuminance",'configure'])
     }
@@ -79,12 +85,21 @@ metadata {
 // Parse incoming device messages to generate events
 def parse(String description) {
     def msg = zigbee.parse(description)
-
+    
+    //log.warn "--"
+    //log.trace description
+    //log.debug msg
+    //def x = zigbee.parseDescriptionAsMap( description )
+    //log.error x
+    
 	Map map = [:]
     if (description?.startsWith('catchall:')) {
 		map = parseCatchAllMessage(description)
 	}
 	else if (description?.startsWith('temperature: ')) {
+		map = parseCustomMessage(description)
+	}
+    else if (description?.startsWith('illuminance: ')) {
 		map = parseCustomMessage(description)
 	}
 //	else if (description?.startsWith('zone status')) {
@@ -126,7 +141,6 @@ def configure() {
 
 // TODO : device watch?
 
-    log.debug "configure"
 	String zigbeeId = swapEndianHex(device.hub.zigbeeId)
 	log.debug "Confuguring Reporting and Bindings."
     
@@ -137,9 +151,10 @@ def configure() {
     
     configCmds += zigbee.configureReporting(0x406,0x0000, 0x18, 30, 600, null) // motion // confirmed
     
-	configCmds += zigbee.configureReporting(0x400,0x0000, 0x21, 30, 600, null) // Set luminance reporting times?? maybe
-
     
+    // Data type is not 0x20 = 0x8D invalid data type Unsigned 8-bit integer
+    
+	configCmds += zigbee.configureReporting(0x400,0x0000, 0x21, 60, 600, 0x20) // Set luminance reporting times?? maybe    
     return refresh() + configCmds 
 }
 
@@ -195,7 +210,7 @@ def getTemperature(value) {
 	}
 
 private Map getLuminanceResult(rawValue) {
-	//log.debug "Luminance rawValue = ${rawValue}"
+	log.debug "Luminance rawValue = ${rawValue}"
 
 	def result = [
 		name: 'illuminance',
@@ -204,7 +219,7 @@ private Map getLuminanceResult(rawValue) {
  		unit: 'lux'
 	]
     
-    result.value = rawValue
+    result.value = rawValue as Integer
     return result
 }
 
@@ -269,6 +284,14 @@ private Map parseCustomMessage(String description) {
 	if (description?.startsWith('temperature: ')) {
 		def value = zigbee.parseHATemperatureValue(description, "temperature: ", getTemperatureScale())
 		resultMap = getTemperatureResult(value)
+	}
+    
+    if (description?.startsWith('illuminance: ')) {
+    log.warn "value: " + description.split(": ")[1]
+            log.warn "proc: " + value
+
+		def value = zigbee.lux( description.split(": ")[1] as Integer ) //zigbee.parseHAIlluminanceValue(description, "illuminance: ", getTemperatureScale())
+		resultMap = getLuminanceResult(value)
 	}
 	return resultMap
 }
@@ -337,8 +360,6 @@ private Map parseCatchAllMessage(String description) {
 					}
 				}
 				else {
-                					log.error cluster.data.last()
-
             		log.debug "catchall : luminance" + cluster
                 	resultMap = getLuminanceResult(cluster.data.last());
                 }
@@ -371,7 +392,6 @@ private Map parseCatchAllMessage(String description) {
 }
 
 private boolean shouldProcessMessage(cluster) {
-log.trace cluster.command
 	// 0x0B is default response indicating message got through
 	boolean ignoredMessage = cluster.profileId != 0x0104 ||
 	cluster.command == 0x0B ||
