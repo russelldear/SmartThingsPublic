@@ -34,24 +34,23 @@ metadata {
     tiles(scale: 2) {
 		// TODO: define your main and details tiles here
         multiAttributeTile(name:"lastAction", type: "generic", width: 6, height: 4){
-			tileAttribute ("device.button", key: "PRIMARY_CONTROL") {
-				attributeState "active", label:'', icon:"st.unknown.zwave.remote-controller", backgroundColor:"#ffffff"
-			}
-            tileAttribute ("device.lastAction", key: "SECONDARY_CONTROL") {
-				attributeState "active", label:'${currentValue}', icon:"st.unknown.zwave.remote-controller", backgroundColor:"#53a7c0"
-			}
-		}
-//        valueTile("lastAction", "device.lastAction", width: 6, height: 2) {
-//			state("lastAction", label:'${currentValue}')
-//		}
-        valueTile("battery", "device.battery", decoration: "flat", inactiveLabel: false, width: 5, height: 2) {
-			state("battery", label:'${currentValue}% battery', unit:"", backgroundColors:[
+            tileAttribute ("device.battery", key: "SECONDARY_CONTROL") {
+				attributeState "battery", label:'${currentValue}% battery',icon:"st.Outdoor.outdoor3", unit:"", backgroundColors:[
 					[value: 30, color: "#ff0000"],
                     [value: 40, color: "#760000"],
 					[value: 60, color: "#ff9900"],
 					[value: 80, color: "#007600"]
-				])
+				]
+			}
+            tileAttribute ("device.lastAction", key: "PRIMARY_CONTROL") {
+				attributeState "active", label:'${currentValue}', icon:"st.Home.home30"
+			}
+
 		}
+//        valueTile("lastAction", "device.lastAction", width: 6, height: 2) {
+//			state("lastAction", label:'${currentValue}')
+//		}
+
         valueTile("battery2", "device.battery", decoration: "flat", inactiveLabel: false, width: 5, height: 1) {
 			state("battery", label:'${currentValue}% battery', unit:"")
 		}
@@ -64,7 +63,7 @@ metadata {
 
 	}
     
-            main "battery"
+            main "lastAction"
         details(["lastAction","battery2","refresh","configure"])
 
 }
@@ -197,13 +196,13 @@ private Map getButtonResult(rawValue) {
                     
                     if ( buttonState == 2 ) {
                      result = createEvent(name: "button", value: "pushed", data: [buttonNumber: button], descriptionText: "$device.displayName button $button was pushed", isStateChange: true)
-                                         sendEvent(name: "lastAction", value: "Button " + button + " was pushed")
+                                         sendEvent(name: "lastAction", value: button + " pushed")
 
 					}
                     
                     if ( buttonState == 3 ) {
                      result = createEvent(name: "button", value: "held", data: [buttonNumber: button], descriptionText: "$device.displayName button $button was held", isStateChange: true)
-                                         sendEvent(name: "lastAction", value: "Button " + button + " was held")
+                                         sendEvent(name: "lastAction", value: button + " held")
 					}
 return result
                     
