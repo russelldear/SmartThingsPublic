@@ -32,6 +32,10 @@ metadata {
 
     tiles(scale: 2) {
 		// TODO: define your main and details tiles here
+        
+        standardTile("button", "device.button", width:2, height: 3) {
+			state "default", label: "", icon: "st.unknown.zwave.remote-controller", backgroundColor: "#ffffff" 
+		}
         valueTile("battery", "device.battery", decoration: "flat", inactiveLabel: false, width: 2, height: 2) {
 			state "battery", label:'${currentValue}% battery', unit:""
 		}
@@ -260,11 +264,11 @@ def refresh() {
 //    refreshCmds += "delay 2000"
     
 //refreshCmds += zigbee.configureReporting(0x000F, 0x006F, 0x18, 0x30, 0x30);
-	refreshCmds += "zdo bind 0x${device.deviceNetworkId} 0x02 0x02 0xFC00 {${device.zigbeeId}} {}"
-    refreshCmds += "delay 2000"
-    refreshCmds += "st cr 0x${device.deviceNetworkId} 0x02 0xFC00 0x0000 0x18 0x001E 0x001E {}"
-    refreshCmds += "delay 2000"
-log.debug refreshCmds
+//	refreshCmds += "zdo bind 0x${device.deviceNetworkId} 0x02 0x02 0xFC00 {${device.zigbeeId}} {}"
+ //   refreshCmds += "delay 2000"
+  //  refreshCmds += "st cr 0x${device.deviceNetworkId} 0x02 0xFC00 0x0000 0x18 0x001E 0x001E {}"
+  //  refreshCmds += "delay 2000"
+//log.debug refreshCmds
 
     return refreshCmds
     
@@ -278,18 +282,11 @@ def configure() {
 //    configCmds += zigbee.batteryConfig()
 
 
-def sourceEndPoint = 0x02
-def configCmds = [
+	configCmds += "zdo bind 0x${device.deviceNetworkId} 0x02 0x02 0xFC00 {${device.zigbeeId}} {}"
+    configCmds += "delay 2000"
+    configCmds += "st cr 0x${device.deviceNetworkId} 0x02 0xFC00 0x0000 0x18 0x001E 0x001E {}"
+    configCmds += "delay 2000"
 
-   //     "zdo bind 0x${device.deviceNetworkId} 0x01 0x02 0x0001 {${device.zigbeeId}} {}", "delay 1000",
-
-     //   "zdo bind 0x${device.deviceNetworkId} 0x01 0x02 0x000F {${device.zigbeeId}} {}", "delay 1000",
-      //          "st rattr 0x${device.deviceNetworkId} 2 1 0 {}", "delay 1000",
-
-            //"zdo bind 0x${device.deviceNetworkId} ${sourceEndPoint} ${destinationEndpointId} cluster {${device.zigbeeId}} {}"
-
-]
-log.warn configCmds
 return configCmds
 
 
