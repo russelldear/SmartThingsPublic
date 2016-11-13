@@ -23,6 +23,7 @@ metadata {
         
         fingerprint profileId: "0104", endpointId: "02", inClusters: "0019", outClusters: "0000,0001,0003,000F,FC00", manufacturer: "Philips", model: "RWL020", deviceJoinName: "Hue Dimmer Switch (ZHA)"
 
+		attribute "lastAction", "string"
 	}
 
 
@@ -32,35 +33,46 @@ metadata {
 
     tiles(scale: 2) {
 		// TODO: define your main and details tiles here
-        
-        standardTile("button", "device.button", width:2, height: 3) {
-			state "default", label: "", icon: "st.unknown.zwave.remote-controller", backgroundColor: "#ffffff" 
+        multiAttributeTile(name:"lastAction", type: "generic", width: 6, height: 4){
+			tileAttribute ("device.button", key: "PRIMARY_CONTROL") {
+				attributeState "active", label:'', icon:"st.unknown.zwave.remote-controller", backgroundColor:"#ffffff"
+			}
+            tileAttribute ("device.lastAction", key: "SECONDARY_CONTROL") {
+				attributeState "active", label:'${currentValue}', icon:"st.unknown.zwave.remote-controller", backgroundColor:"#53a7c0"
+			}
 		}
-        valueTile("battery", "device.battery", decoration: "flat", inactiveLabel: false, width: 2, height: 2) {
-			state "battery", label:'${currentValue}% battery', unit:""
+//        valueTile("lastAction", "device.lastAction", width: 6, height: 2) {
+//			state("lastAction", label:'${currentValue}')
+//		}
+        valueTile("battery", "device.battery", decoration: "flat", inactiveLabel: false, width: 5, height: 2) {
+			state("battery", label:'${currentValue}% battery', unit:"", backgroundColors:[
+					[value: 30, color: "#ff0000"],
+                    [value: 40, color: "#760000"],
+					[value: 60, color: "#ff9900"],
+					[value: 80, color: "#007600"]
+				])
 		}
-                standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+        valueTile("battery2", "device.battery", decoration: "flat", inactiveLabel: false, width: 5, height: 1) {
+			state("battery", label:'${currentValue}% battery', unit:"")
+		}
+        standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 1, height: 1) {
             state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
         }
         standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
-            state "default", label:"configure", action:"configure"
+            state "default", label:"bind", action:"configure"
         }
+
 	}
     
             main "battery"
-        details(["battery","refresh","configure"])
+        details(["lastAction","battery2","refresh","configure"])
 
 }
 
 // parse events into attributes
 def parse(String description) {
-	log.debug "Parsing '${description}'"
         def msg = zigbee.parse(description)
-log.trace msg
-
-
-    
-    
+   
     
     /// Actual code down here
     Map map = [:]
@@ -81,8 +93,7 @@ log.trace msg
 	}
     
     return result
-	// TODO: handle 'battery' attribute
-	// TODO: handle 'button' attribute
+
 	// TODO: handle 'numberOfButtons' attribute
 
 }
@@ -97,34 +108,12 @@ private List parseReportAttributeMessage(String description) {
 
 	List result = []
     
-    // Temperature
-	if (descMap.cluster == "0402" && descMap.attrId == "0000") {
-		def value = getTemperature(descMap.value)
-		result << getTemperatureResult(value)
-	}
-    
-    // Motion
-   	else if (descMap.cluster == "0406" && descMap.attrId == "0000") {
-    	result << getMotionResult(descMap.value)
-	}
-    // PIR Seeintgs
-    else if ( descMap.cluster == "0406" && descMap.attrId == "0010") {
-    log.error descMap
-    }
     // Battery
-	else if (descMap.cluster == "0001" && descMap.attrId == "0020") {
+	if (descMap.cluster == "0001" && descMap.attrId == "0020") {
     log.warn descMap
 		result << getBatteryResult(Integer.parseInt(descMap.value, 16))
 	}
     
-    // Luminance
-    //else if (descMap.cluster == "0402" ) { //&& descMap.attrId == "0020") {
-	//	log.error "Luminance Response " + description
-     //   //result << getBatteryResult(Integer.parseInt(descMap.value, 16))
-	//}
-    
-
-
 	return result
 }
 
@@ -208,10 +197,13 @@ private Map getButtonResult(rawValue) {
                     
                     if ( buttonState == 2 ) {
                      result = createEvent(name: "button", value: "pushed", data: [buttonNumber: button], descriptionText: "$device.displayName button $button was pushed", isStateChange: true)
+                                         sendEvent(name: "lastAction", value: "Button " + button + " was pushed")
+
 					}
                     
                     if ( buttonState == 3 ) {
-                     result = createEvent(name: "button", value: "held", data: [buttonNumber: button], descriptionText: "$device.displayName button $button was pushed", isStateChange: true)
+                     result = createEvent(name: "button", value: "held", data: [buttonNumber: button], descriptionText: "$device.displayName button $button was held", isStateChange: true)
+                                         sendEvent(name: "lastAction", value: "Button " + button + " was held")
 					}
 return result
                     
