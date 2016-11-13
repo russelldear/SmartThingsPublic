@@ -21,7 +21,7 @@ metadata {
         capability "Button"
 		capability "Sensor"
         
-        fingerprint profileId: "0104", endpointId: "02", inClusters: "0019", outClusters: "0000,0001,0003,000F,FC00", manufacturer: "Philips", model: "RWL020", deviceJoinName: "Hue Dimmer Switch (ZHA)"
+        fingerprint profileId: "0104", endpointId: "02", application:"02", outClusters: "0019", inClusters: "0000,0001,0003,000F,FC00", manufacturer: "Philips", model: "RWL020", deviceJoinName: "Hue Dimmer Switch (ZHA)"
 
 		attribute "lastAction", "string"
 	}
@@ -72,7 +72,7 @@ metadata {
 def parse(String description) {
         def msg = zigbee.parse(description)
    
-    
+    log.warn msg
     /// Actual code down here
     Map map = [:]
     if (description?.startsWith('catchall:')) {
@@ -129,7 +129,7 @@ private boolean shouldProcessMessage(cluster) {
 */
 //TODO: needs calibration
 private Map getBatteryResult(rawValue) {
-	//log.debug "Battery rawValue = ${rawValue}"
+	log.debug "Battery rawValue = ${rawValue}"
 
 	def result = [
 		name: 'battery',
@@ -179,7 +179,6 @@ private Map getBatteryResult(rawValue) {
 }
 
 private Map getButtonResult(rawValue) {
-      //  def result = createEvent(name: "button", value: "pushed", data: [buttonNumber: button], descriptionText: "$device.displayName button $button was pushed", isStateChange: true)
 
 	def result = [
 		name: 'button',
@@ -280,9 +279,23 @@ def configure() {
 	configCmds += "zdo bind 0x${device.deviceNetworkId} 0x02 0x02 0x0001 {${device.zigbeeId}} {}"
     configCmds += "delay 2000"
     configCmds += "st cr 0x${device.deviceNetworkId} 0x02 0x0001 0x0020 0x20 0x001E 0x0258 {}"
+   //    configCmds += "st cr 0x${device.deviceNetworkId} 0x02 0x0001 0x0020 0x20 0x001E 0x001e {}"
+
     configCmds += "delay 2000"
 
-return configCmds
+return configCmds + refresh()
 
 
 }
+
+def configureHealthCheck() {
+    Integer hcIntervalMinutes = 12
+    refresh()
+    sendEvent(name: "checkInterval", value: hcIntervalMinutes * 60, displayed: false, data: [protocol: "zigbee", hubHardwareId: device.hub.hardwareID])
+}
+
+def updated() {
+    log.debug "in updated()"
+    
+    configureHealthCheck()
+    }
