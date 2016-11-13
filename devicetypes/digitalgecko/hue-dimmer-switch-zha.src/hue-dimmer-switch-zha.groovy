@@ -246,13 +246,11 @@ private Map parseCatchAllMessage(String description) {
 
 
 def refresh() {
-	//zigbee.readAttribute( 0x0001, 0x0020
-    log.debug "refresh"
-    def cmds = []
+    log.debug "Refresh"
     
     def refreshCmds = []
     
-//    refreshCmds += "st rattr 0xDAD6 0x02 0x0001 0x0020"; // WORKS! - Fetches battery from 0x02
+    refreshCmds += "st rattr 0x${device.deviceNetworkId} 0x02 0x0001 0x0020"; // WORKS! - Fetches battery from 0x02
 
 
 //   configCmds += zigbee.configureReporting(0x406,0x0000, 0x18, 30, 600, null) // motion // confirmed
@@ -271,20 +269,26 @@ def refresh() {
 //log.debug refreshCmds
 
     return refreshCmds
-    
 }
 
 def configure() {
 //	String zigbeeId = swapEndianHex(device.hub.zigbeeId)
-	log.debug "Confugiring Reporting and Bindings."
-
-//	configureReporting(0x0001, 0x0020, 0x20, 30, 21600, 0x01) //monitor battery
-//    configCmds += zigbee.batteryConfig()
+	log.debug "Configiring Reporting and Bindings."
+    def configCmds = []
 
 
+// Monitor Buttons
+//TODO: This could be zigbee.configureReporting(0xFC00, 0x0000, 0x18, 0x001e, 0x001e); but no idea how to point it at a different endpoint
 	configCmds += "zdo bind 0x${device.deviceNetworkId} 0x02 0x02 0xFC00 {${device.zigbeeId}} {}"
     configCmds += "delay 2000"
     configCmds += "st cr 0x${device.deviceNetworkId} 0x02 0xFC00 0x0000 0x18 0x001E 0x001E {}"
+    configCmds += "delay 2000"
+
+// Monitor Battery
+//TODO: This could be zigbee.batteryConfig(); but no idea how to point it at a different endpoint
+	configCmds += "zdo bind 0x${device.deviceNetworkId} 0x02 0x02 0x0001 {${device.zigbeeId}} {}"
+    configCmds += "delay 2000"
+    configCmds += "st cr 0x${device.deviceNetworkId} 0x02 0x0001 0x0020 0x20 0x001E 0x0258 {}"
     configCmds += "delay 2000"
 
 return configCmds
