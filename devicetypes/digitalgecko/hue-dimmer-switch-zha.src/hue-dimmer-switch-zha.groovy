@@ -57,9 +57,9 @@ metadata {
         standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 1, height: 1) {
             state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
         }
-        standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
-            state "default", label:"bind", action:"configure"
-        }
+//        standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+//            state "default", label:"bind", action:"configure"
+//        }
 
 	}
     
@@ -265,7 +265,9 @@ def configure() {
 //	String zigbeeId = swapEndianHex(device.hub.zigbeeId)
 	log.debug "Configiring Reporting and Bindings."
     def configCmds = []
-
+    
+    // Configure Button Count
+sendEvent(name: "numberOfButtons", value: 4, displayed: false)
 
 // Monitor Buttons
 //TODO: This could be zigbee.configureReporting(0xFC00, 0x0000, 0x18, 0x001e, 0x001e); but no idea how to point it at a different endpoint
