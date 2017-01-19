@@ -72,7 +72,7 @@ metadata {
 def parse(String description) {
         def msg = zigbee.parse(description)
    
-    log.warn msg
+    //log.warn msg
     /// Actual code down here
     Map map = [:]
     if (description?.startsWith('catchall:')) {
@@ -109,7 +109,7 @@ private List parseReportAttributeMessage(String description) {
     
     // Battery
 	if (descMap.cluster == "0001" && descMap.attrId == "0020") {
-    log.warn descMap
+   // log.warn descMap
 		result << getBatteryResult(Integer.parseInt(descMap.value, 16))
 	}
     
@@ -129,7 +129,7 @@ private boolean shouldProcessMessage(cluster) {
 */
 //TODO: needs calibration
 private Map getBatteryResult(rawValue) {
-	log.debug "Battery rawValue = ${rawValue}"
+	//log.debug "Battery rawValue = ${rawValue}"
 
 	def result = [
 		name: 'battery',
@@ -236,7 +236,7 @@ private Map parseCatchAllMessage(String description) {
 
 
 def refresh() {
-    log.debug "Refresh"
+    //log.debug "Refresh"
     
     def refreshCmds = []
     
@@ -263,7 +263,7 @@ def refresh() {
 
 def configure() {
 //	String zigbeeId = swapEndianHex(device.hub.zigbeeId)
-	log.debug "Configiring Reporting and Bindings."
+	//log.debug "Configiring Reporting and Bindings."
     def configCmds = []
     
     // Configure Button Count
@@ -297,7 +297,7 @@ def configureHealthCheck() {
 }
 
 def updated() {
-    log.debug "in updated()"
+   // log.debug "in updated()"
     
     configureHealthCheck()
     }
