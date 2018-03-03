@@ -1,5 +1,5 @@
 /**
- *  Hue Dimmer Switch
+ *  Hue Dimmer Switch 
  *
  *  Copyright 2016 Stephen McLaughlin
  *
